@@ -19,10 +19,8 @@ const ticketNumMessage=document.querySelector("#ticketNum-message");
 const ticketRateMessage=document.querySelector("#ticketRate-message");
 const ticketDescriptionMessage=document.querySelector("#ticketDescription-message");
 
-
 const url="https://raw.githubusercontent.com/hexschool/js-training/main/travelApi.json";
 let data = [];
-
 
 //修正，新增完套票後表單輸入框應清除
 const addTicketForm=document.querySelector(".addTicket-form");
@@ -43,16 +41,16 @@ function init(){
     axios.get(url)
     .then(function(res){
         data=res.data.data;
-        
-        render(data);
         //將渲染函式包在then裡面、賦予data之後，確保取得data後才會執行渲染
+        render(data);
+
+        //week7新增圖表
+         chartFunc(data);
     })
     .catch(function(err){
         console.log(err);
     })
-
     regionSearch.innerHTML=regionSearchSelectReset;
-
 }
 
 init();
@@ -212,8 +210,54 @@ addTicketBtn.addEventListener("click",function(){
         addTicketForm.reset();
         //修正，新增套票後搜尋下拉選單應恢復為初始狀態
         regionSearch.innerHTML=regionSearchSelectReset;
-
         render(data);
+        //week7新增圖表
+        chartFunc(data);
     }
-
 })
+
+
+// week7 新增圖表
+// week7 新增圖表
+
+function chartFunc(chartData){
+    let areaSumObj={}; //數值統計結果
+    let chartRenderData=[]; //可以做渲染圖表的格式
+
+    chartData.forEach(function(item){
+        if(areaSumObj[item.area]==undefined){
+            areaSumObj[item.area]=1;
+        }else{
+            areaSumObj[item.area]+=1;
+        }
+    })
+
+    const areaArr=Object.keys(areaSumObj); //放原始資料統計結果 物件的keys
+    areaArr.forEach(function(area){ //遍歷這些keys，將key與對應value做成arr，丟到最終要渲染的陣列內
+        let arr=[];
+        arr.push(area);
+        arr.push(areaSumObj[area]);
+        chartRenderData.push(arr);
+    })
+
+    const chart = c3.generate({
+        bindto: '#chart',
+        data: {
+            columns:chartRenderData,
+            type : 'donut',
+            onclick: function (d, i) { console.log("onclick", d, i); },
+            onmouseover: function (d, i) { console.log("onmouseover", d, i); },
+            onmouseout: function (d, i) { console.log("onmouseout", d, i); }
+        },
+        donut: {
+            title: "套票地區比重",
+            width: 16,
+            label: {
+                show: false
+              }
+        },
+        color: {
+            pattern: ['#E68619', '#26BFC7', '#5151D3', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5']
+        }
+    });
+}
